@@ -5,7 +5,7 @@ const coderSchema = new Schema(
     {
         name: String,
         level: Number,
-        projectId: Array
+        projectIds: Array
     });
 
 module.exports = mongoose.model('Coder', coderSchema);

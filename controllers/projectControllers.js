@@ -1,32 +1,41 @@
+const Coder = require('../models/coderModel');
 const Project = require('../models/projectModel');
 
-const addProject = (args) =>
+const addProject = async (args) =>
 {
-    let project = new Project(
+    const project = new Project(
         {
             name: args.name,
             details: args.details,
-            coderId: args.projectId
+            coderIds: args.coderIds
         });
-    return project.save();
+    const addedProject = await project.save();
+    return addedProject;
 }
 
 const deleteProject = async (args) =>
 {
-    await Project.findByIdAndDelete(args.id);
-    return { msg: 'Project Removed'};
+    const deletedProject = await Project.findByIdAndDelete(args.id);
+    return deletedProject.id;
 }
 
 const updateProject = async (args) =>
 {
-    project = await Project.findByIdAndUpdate(args.id, (args.name) ? { name  } : { details });
-    return project;
+    const updatedProject = await Project.findByIdAndUpdate(args.id, args, {new: true});
+    return updatedProject;
 }
 
-const getMutualProjects = () =>
+const getMutualProjects = async (coder1Id, coder2Id) =>
 {
-    const mutualProjectIds = projectIds1.filter((id1) => { return projectIds2.indexOf(id1) > -1; });
-    return Project.find({ id: mutualProjectIds });
+    const coder1 = await Coder.findById( coder1Id );
+    const coder2 = await Coder.findById( coder2Id );
+    const coder1ProjectIds = coder1.projectIds;
+    const coder2ProjectIds = coder2.projectIds;
+
+    const mutualProjectIds = coder1ProjectIds.filter((id1) => { return coder2ProjectIds.indexOf(id1) > -1; });
+    const mutualProjects = await Project.find({ _id: { $in: mutualProjectIds } });
+
+    return mutualProjects;
 }
 
 module.exports = { addProject, updateProject, deleteProject, getMutualProjects };

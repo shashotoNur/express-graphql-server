@@ -15,12 +15,13 @@ const ProjectType = new GraphQLObjectType(
     {
         name: 'Project',
         fields: () => ({
-                coderIds: { type: GraphQLList },
+                id: { type: GraphQLID },
+                coderIds: { type: new GraphQLList(GraphQLID) },
                 name: { type: GraphQLString },
                 details: { type: GraphQLString },
                 coders: {
                     type: new GraphQLList(CoderType),
-                    resolve(parent, _args) { return Coder.find({ projectId: parent.id }); }
+                    resolve(parent, _args) { return Coder.find({ projectIds: parent.id }); }
                 }
         })
     });
@@ -29,34 +30,16 @@ const CoderType = new GraphQLObjectType(
     {
         name: 'Coder',
         fields: () => ({
-            projectIds: { type: GraphQLList },
+            id: { type: GraphQLID },
+            projectIds: { type: new GraphQLList(GraphQLID) },
             name: { type: GraphQLString },
             level: { type: GraphQLInt },
             projects: {
                 type: new GraphQLList(ProjectType),
-                resolve(parent, _args) { return Project.find({ coderId: parent.id }); }
+                resolve(parent, _args) { return Project.find({ coderIds: parent.id }); }
             }
         })
     });
-
-const MutualCodersType = new GraphQLObjectType(
-    {
-        name: 'MutualCoder',
-        fields: () => ({
-            ids1: { type: GraphQLList },
-            ids2: { type: GraphQLList }
-        })
-    });
-
-const MutualProjectsType = new GraphQLObjectType(
-    {
-        name: 'MutualProject',
-        fields: () => ({
-            ids1: { type: GraphQLList },
-            ids2: { type: GraphQLList }
-        })
-    });
-
 
 // Query structures are defined
 const RootQuery = new GraphQLObjectType(
@@ -92,24 +75,24 @@ const RootQuery = new GraphQLObjectType(
             
             mutualCoders:
                 {
-                    type: new GraphQLList(MutualCodersType),
+                    type: new GraphQLList(CoderType),
                     args: 
                     { 
-                        ids1: { type: GraphQLList },
-                        ids2: { type: GraphQLList }
+                        project1Id: { type: GraphQLID },
+                        project2Id: { type: GraphQLID }
                     },
-                    resolve(_parent, args) { return getMutualCoders(args.ids1, args.ids2);; }
+                    resolve(_parent, args) { return getMutualCoders(args.project1Id, args.project2Id); }
                 },
 
             mutualProjects:
                 {
-                    type: new GraphQLList(MutualProjectsType),
-                    args: 
-                    { 
-                        ids1: { type: GraphQLList },
-                        ids2: { type: GraphQLList }
+                    type: new GraphQLList(ProjectType),
+                    args:
+                    {
+                        coder1Id: { type: GraphQLID },
+                        coder2Id: { type: GraphQLID },
                     },
-                    resolve(_parent, _args) { return getMutualProjects(args.ids1, args.ids2);; }
+                    resolve(_parent, args) { return getMutualProjects(args.coder1Id, args.coder2Id);; }
                 },
         }
     });
@@ -126,9 +109,10 @@ const Mutation = new GraphQLObjectType(
                 type: CoderType,
                 args:
                 {
+                    id: { type: GraphQLID },
                     name: { type: GraphQLString },
                     level: { type: GraphQLInt },
-                    projectIds: { type: GraphQLList }
+                    projectIds: { type: new GraphQLList(GraphQLID) }
                 },
                 resolve(_parent, args) { return addCoder(args); }
             },
@@ -137,9 +121,10 @@ const Mutation = new GraphQLObjectType(
                 type: ProjectType,
                 args:
                 {
+                    id: { type: GraphQLID },
                     name: { type: new GraphQLNonNull(GraphQLString) },
                     details: { type: GraphQLString },
-                    coderIds: { type: GraphQLList }
+                    coderIds: { type: new GraphQLList(GraphQLID) }
                 },
                 resolve(_parent, args) { return addProject(args); }
             },
@@ -163,7 +148,7 @@ const Mutation = new GraphQLObjectType(
                     id: { type: new GraphQLNonNull(GraphQLID) },
                     name: { type: GraphQLString },
                     details: { type: GraphQLString },
-                    coderIds: { type: GraphQLList }
+                    coderIds: { type: new GraphQLList(GraphQLID) }
                 },
                 resolve(_parent, args) { return updateProject(args); }
             },
