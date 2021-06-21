@@ -1,5 +1,22 @@
 const Coder = require('../models/coderModel');
-const Project = require('../models/projectModel');
+
+const getCoders = async () =>
+{
+    const coders = await Coder.find({});
+    return coders;
+}
+
+const getProjectCoders = async (projectId) =>
+{
+    const coders = await Coder.find({ projectIds: projectId });
+    return coders;
+}
+
+const getCoder = async (id) =>
+{
+    const coder = await Coder.findById(id);
+    return coder;
+}
 
 const addCoder = async (args) =>
 {
@@ -27,15 +44,17 @@ const deleteCoder = async (args) =>
 
 const getMutualCoders = async (project1Id, project2Id) =>
 {
-    const project1 = await Project.findById( project1Id );
-    const project2 = await Project.findById( project2Id );
-    const project1CoderIds = project1.coderIds;
-    const project2CoderIds = project2.coderIds;
+    const project1Coders = await getProjectCoders(project1Id);
+    const project2Coders = await getProjectCoders(project2Id);
 
-    const mutualCoderIds = project1CoderIds.filter((id1) => { return project2CoderIds.indexOf(id1) > -1; });
-    const mutualCoders = await Coder.find({ _id: { $in: mutualCoderIds } });
+    var mutualCoders = [];
+    project1Coders.forEach(project1Coder => {
+        project2Coders.forEach(project2Coder => {
+            if(project1Coder.id == project2Coder.id) mutualCoders.unshift(project1Coder);
+        });
+    });
 
     return mutualCoders;
 }
 
-module.exports = { addCoder, updateCoder, deleteCoder, getMutualCoders };
+module.exports = { getCoders, getProjectCoders, getCoder, addCoder, updateCoder, deleteCoder, getMutualCoders };

@@ -1,16 +1,15 @@
 const graphql = require('graphql');
 
-const Coder = require('../models/coderModel');
-const Project = require('../models/projectModel');
-
-const { addCoder, updateCoder, deleteCoder, getMutualCoders } = require('../controllers/coderControllers');
-const { addProject, updateProject, deleteProject, getMutualProjects } = require('../controllers/projectControllers');
+const { getCoders, getProjectCoders, getCoder, addCoder,
+    updateCoder, deleteCoder, getMutualCoders } = require('../controllers/coderControllers');
+const { getProjects, getCoderProjects, getProject, addProject,
+    updateProject, deleteProject, getMutualProjects } = require('../controllers/projectControllers');
 
 const { GraphQLObjectType, GraphQLString, GraphQLSchema, GraphQLID,
     GraphQLInt, GraphQLList, GraphQLNonNull } = graphql;
 
 
-// Query Schemas are defined
+// Return types
 const ProjectType = new GraphQLObjectType(
     {
         name: 'Project',
@@ -21,7 +20,7 @@ const ProjectType = new GraphQLObjectType(
                 details: { type: GraphQLString },
                 coders: {
                     type: new GraphQLList(CoderType),
-                    resolve(parent, _args) { return Coder.find({ projectIds: parent.id }); }
+                    resolve(parent, _args) { return getProjectCoders(parent.id); }
                 }
         })
     });
@@ -36,12 +35,12 @@ const CoderType = new GraphQLObjectType(
             level: { type: GraphQLInt },
             projects: {
                 type: new GraphQLList(ProjectType),
-                resolve(parent, _args) { return Project.find({ coderIds: parent.id }); }
+                resolve(parent, _args) { return getCoderProjects(parent.id); }
             }
         })
     });
 
-// Query structures are defined
+// Reading data
 const RootQuery = new GraphQLObjectType(
     {
         name: 'RootQueryType',
@@ -51,26 +50,26 @@ const RootQuery = new GraphQLObjectType(
                 {
                     type: ProjectType,
                     args: { id: { type: new GraphQLNonNull(GraphQLID) } },
-                    resolve(_parent, args) { return Project.findById(args.id); }
+                    resolve(_parent, args) { return getProject(args.id); }
                 },
 
             coder:
                 {
                     type: CoderType,
                     args: { id: { type: new GraphQLNonNull(GraphQLID) } },
-                    resolve(_parent, args) { return Coder.findById(args.id); }
+                    resolve(_parent, args) { return getCoder(args.id); }
                 },
 
             coders:
                 {
                     type: new GraphQLList(CoderType),
-                    resolve(_parent, _args) { return Coder.find({}); }
+                    resolve(_parent, _args) { return getCoders(); }
                 },
 
             projects:
                 {
                     type: new GraphQLList(ProjectType),
-                    resolve(_parent, _args) { return Project.find({}); }
+                    resolve(_parent, _args) { return getProjects(); }
                 },
             
             mutualCoders:
@@ -98,7 +97,7 @@ const RootQuery = new GraphQLObjectType(
     });
 
 
-// Query & Contollers for mutations are defined
+// Anything other than reading
 const Mutation = new GraphQLObjectType(
     {
         name: 'Mutation',
@@ -167,6 +166,7 @@ const Mutation = new GraphQLObjectType(
             }
         }
     });
+
 
 module.exports = new GraphQLSchema({
     query: RootQuery,

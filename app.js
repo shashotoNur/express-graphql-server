@@ -15,7 +15,6 @@ app.use('/api', graphqlHTTP(
   })
 );
 
-// connect to db and let the server listen for requests
 mongoose.connect(dbURI,
   {
     useUnifiedTopology: true,
