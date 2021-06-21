@@ -1,11 +1,13 @@
 const express = require('express');
 const { graphqlHTTP } = require('express-graphql');
 const mongoose = require('mongoose');
+var cors = require('cors');
 
 const coderProjectSchema = require('./schema/coderProjectSchema');
 const dbURI = require('./config/config');
 
 const app = express();
+app.use(cors());
 
 // bind express with graphql
 app.use('/api', graphqlHTTP(
